@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://sushisystems.io/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://sushisystems.io/about</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sushisystems.io/projects</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sushisystems.io/contact</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://sushisystems.io/projects/sushiruntime</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://sushisystems.io/projects/projectfs</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://sushisystems.io/projects/projectmobilerts</loc>
+    <priority>0.6</priority>
+  </url>
+</urlset>

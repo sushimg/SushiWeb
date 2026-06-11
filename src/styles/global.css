@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Clash Display", sans-serif;
+  --font-sans: "Clash Grotesk", sans-serif;
+}
+
+@font-face {
+  font-family: "Clash Display";
+  src: url("/fonts/ClashDisplay-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Clash Grotesk";
+  src: url("/fonts/ClashGrotesk-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Palette lifted from the original Framer site tokens */
+:root {
+  --bg:          #f5f5f5;
+  --bg-alt:      #e9e9e9;
+  --bg-card:     #e9e9e9;
+  /* project card caption bar — a touch darker than --bg-alt sections */
+  --bg-caption:  #e1e1e1;
+  --text:        #1a1b1f;
+  --text-muted:  rgba(26, 27, 31, 0.5);
+  --border:      rgba(26, 27, 31, 0.12);
+  --accent:      #f0a500;
+  --nav-bg:      rgba(245, 245, 245, 0.88);
+  /* wash laid over the hero image so dark text stays readable */
+  --hero-wash:   rgba(245, 245, 245, 0.6);
+}
+
+.dark {
+  --bg:          #0a0a09;
+  --bg-alt:      #141413;
+  --bg-card:     rgba(255, 255, 255, 0.06);
+  /* project card caption bar — a touch lighter than --bg-alt sections */
+  --bg-caption:  #1b1b1a;
+  --text:        #f5f5f5;
+  --text-muted:  rgba(245, 245, 245, 0.5);
+  --border:      rgba(255, 255, 255, 0.12);
+  --accent:      #f0a500;
+  --nav-bg:      rgba(10, 10, 9, 0.88);
+  --hero-wash:   rgba(10, 10, 9, 0.6);
+}
+
+/* NOTE: no universal margin/padding reset here — Tailwind preflight already
+   does it, and an unlayered `* { margin: 0 }` overrides all layered
+   spacing utilities (mx-auto, px-*, py-*), breaking centering site-wide. */
+
+html {
+  scroll-behavior: smooth;
+  /* scrollbar always visible — prevents layout shift on scroll */
+  overflow-y: scroll;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  /* never wider than viewport, even with scrollbar */
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Footer sticks to bottom on short pages */
+#root > footer { margin-top: auto; }
+
+body {
+  background-color: var(--bg);
+  /* prevent horizontal scroll on all viewports */
+  overflow-x: hidden;
+  color: var(--text);
+  font-family: "Clash Grotesk", sans-serif;
+  /* crisper text + smoother compositing */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* No grey flash / 300ms delay on tap; instant, snappy interactions. */
+* { -webkit-tap-highlight-color: transparent; }
+a, button, [role="button"], summary { touch-action: manipulation; }
+
+/* Honour the OS "reduce motion" setting: drop every animation/transition
+   (including the page-turn and intro curtain) down to instant. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Theme toggle: circular reveal driven from useTheme via the View
+   Transitions API. Default cross-fade is disabled so only our clip-path
+   animation runs; no per-element color transitions, so the flip is instant
+   under the expanding circle. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Clash Display", sans-serif;
+}
