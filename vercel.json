@@ -1,7 +1,29 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "source": "/install.sh",
+      "destination": "https://raw.githubusercontent.com/sushisystems/sushistack/main/install.sh"
+    },
+    {
+      "source": "/install.ps1",
+      "destination": "https://raw.githubusercontent.com/sushisystems/sushistack/main/install.ps1"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "headers": [
+    {
+      "source": "/install.sh",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
+      ]
+    },
+    {
+      "source": "/install.ps1",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
