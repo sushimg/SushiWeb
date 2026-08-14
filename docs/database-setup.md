@@ -15,6 +15,13 @@ Repo kökünde `.env.local` dosyası oluştur:
 
 Bu dosya `.gitignore` içindedir ve asla commit edilmez.
 
+`apps/accounts` bir Next.js uygulaması olduğundan normalde yalnızca kendi
+dizinindeki `.env.local`'a bakar. Bunun yerine kök `.env.local`'ı tek
+doğruluk kaynağı olarak kullanabilmesi için `apps/accounts/next.config.ts`
+bu dosyayı elle okur (zaten ayarlı değişkenlerin üzerine yazmadan — üretimde
+Vercel'in sağladığı değerler kazanır). `apps/accounts/.env.local` diye ikinci
+bir dosya oluşturmana gerek yok.
+
 ## 3. Migration'ları uygula
 
     npm run migrate -w @sushi/identity-infra
