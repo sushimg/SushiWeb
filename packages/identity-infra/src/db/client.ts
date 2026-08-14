@@ -1,5 +1,5 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless'
-import { readDatabaseUrl } from './env'
+import { readDatabaseUrl } from './env.ts'
 
 let client: NeonQueryFunction<false, false> | null = null
 
