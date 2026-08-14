@@ -1,1 +1,1 @@
-export const PACKAGE_NAME = '@sushi/identity-core'
+export { constantTimeEqual, generateToken, hashToken } from './tokens'
