@@ -32,3 +32,4 @@ _framer_backup/
 apps/*/dist
 apps/*/.next
 packages/*/dist
+*.tsbuildinfo
