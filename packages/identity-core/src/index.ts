@@ -39,3 +39,4 @@ export {
   requestPasswordReset,
   type ResetDeps,
 } from './use-cases/reset-password'
+export type { RateLimiter } from './ports/rate-limiter'
