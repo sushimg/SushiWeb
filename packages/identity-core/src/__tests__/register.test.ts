@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { register, type RegisterDeps } from '../use-cases/register'
+import { hashToken } from '../tokens'
 import type { AccountStore } from '../ports/account-store'
 import type { Account } from '../types'
 import type { OutgoingEmail } from '../ports/email-sender'
@@ -71,9 +72,8 @@ describe('register', () => {
   it('token\'ı ham değil, hash\'lenmiş saklar', async () => {
     const { deps, sent, created } = makeDeps()
     await register({ email: 'a@example.com', password: 'guclu-parola-123', displayName: null }, deps)
-    const rawToken = sent[0]!.body.split('token=')[1]!
-    expect(created[0]?.tokenHash).not.toBe(rawToken)
-    expect(created[0]?.tokenHash).toMatch(/^[0-9a-f]{64}$/)
+    const rawToken = sent[0]!.body.match(/token=(\S+)/)?.[1]!
+    expect(created[0]?.tokenHash).toBe(await hashToken(rawToken))
   })
 
   it('geçersiz e-postayı reddeder', async () => {
@@ -108,12 +108,13 @@ describe('register', () => {
   it('e-posta zaten kayıtlıysa da accepted döner', async () => {
     // Hesap sayımı yasağı: cevap, adresin kayıtlı olup olmadığını ele
     // vermemeli. Saldırgan hangi adreslerin sistemde olduğunu öğrenememeli.
-    const { deps, accounts } = makeDeps()
+    const { deps, accounts, created } = makeDeps()
     const input = { email: 'a@example.com', password: 'guclu-parola-123', displayName: null }
     await register(input, deps)
     const second = await register(input, deps)
     expect(second.outcome).toBe('accepted')
     expect(accounts).toHaveLength(1)
+    expect(created).toHaveLength(1)
   })
 
   it('e-posta zaten kayıtlıysa doğrulama değil, uyarı e-postası gönderir', async () => {
@@ -127,7 +128,7 @@ describe('register', () => {
 
   it('e-posta gönderimi patlarsa kayıt yine de başarılı sayılır', async () => {
     // Kullanıcı hesabını kaybetmemeli; doğrulamayı sonra yeniden isteyebilir.
-    const { deps, accounts } = makeDeps({
+    const { deps, accounts, created } = makeDeps({
       email: { send: async () => { throw new Error('smtp down') } },
     })
     const result = await register(
@@ -136,5 +137,6 @@ describe('register', () => {
     )
     expect(result.outcome).toBe('accepted')
     expect(accounts).toHaveLength(1)
+    expect(created).toHaveLength(1)
   })
 })
