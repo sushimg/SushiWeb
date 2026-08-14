@@ -16,18 +16,25 @@ export default function LoginPage() {
       <h1 className="text-2xl font-semibold">Giriş yap</h1>
 
       <form action={action} className="space-y-4">
-        <Field label="E-posta" name="email" type="email" autoComplete="email" />
+        <Field
+          label="E-posta"
+          name="email"
+          type="email"
+          autoComplete="email"
+          describedBy={state.message ? 'giris-form-error' : undefined}
+        />
         <Field
           label="Parola"
           name="password"
           type="password"
           autoComplete="current-password"
+          describedBy={state.message ? 'giris-form-error' : undefined}
         />
         <SubmitButton>Giriş yap</SubmitButton>
       </form>
 
       {state.message && (
-        <p role="alert" className="text-sm text-red-400">{state.message}</p>
+        <p id="giris-form-error" role="alert" className="text-sm text-red-400">{state.message}</p>
       )}
 
       <div className="flex justify-between text-sm text-neutral-400">

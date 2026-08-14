@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState } from 'react'
+import { PASSWORD_MIN_BYTES } from '@sushi/identity-core'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
 import { registerAction, type RegisterState } from './actions'
@@ -27,21 +28,28 @@ export default function RegisterPage() {
 
       <form action={action} className="space-y-4">
         <Field label="Adın" name="displayName" required={false} autoComplete="name" />
-        <Field label="E-posta" name="email" type="email" autoComplete="email" />
+        <Field
+          label="E-posta"
+          name="email"
+          type="email"
+          autoComplete="email"
+          describedBy={state.message ? 'kayit-form-error' : undefined}
+        />
         <Field
           label="Parola"
           name="password"
           type="password"
           autoComplete="new-password"
+          describedBy={state.message ? 'kayit-form-error' : undefined}
         />
         <p className="text-xs text-neutral-500">
-          En az 12 karakter. Bilinen sızıntılarda geçen parolalar kabul edilmez.
+          En az {PASSWORD_MIN_BYTES} karakter. Bilinen sızıntılarda geçen parolalar kabul edilmez.
         </p>
         <SubmitButton>Hesap oluştur</SubmitButton>
       </form>
 
       {state.message && (
-        <p role="alert" className="text-sm text-red-400">{state.message}</p>
+        <p id="kayit-form-error" role="alert" className="text-sm text-red-400">{state.message}</p>
       )}
 
       <p className="text-sm text-neutral-400">

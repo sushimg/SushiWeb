@@ -2,6 +2,7 @@ export { constantTimeEqual, generateToken, hashToken } from './tokens'
 export {
   checkPassword,
   checkPasswordPolicy,
+  PASSWORD_MIN_BYTES,
   type BreachChecker,
   type PolicyViolation,
 } from './password-policy'

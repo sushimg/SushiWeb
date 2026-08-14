@@ -1,7 +1,8 @@
 'use server'
 
-import { register } from '@sushi/identity-core'
+import { PASSWORD_MIN_BYTES, register } from '@sushi/identity-core'
 import { headers } from 'next/headers'
+import { clientIp } from '@/lib/client-ip'
 import { deps } from '@/lib/deps'
 import { uniform } from '@/lib/uniform'
 
@@ -10,12 +11,13 @@ export interface RegisterState {
   done: boolean
 }
 
+const RATE_LIMITED = 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.'
+
 const MESSAGES: Record<string, string> = {
   'invalid-email': 'Bu e-posta adresi geçerli görünmüyor.',
-  'too-short': 'Parola en az 12 karakter olmalı.',
+  'too-short': `Parola en az ${PASSWORD_MIN_BYTES} karakter olmalı.`,
   'too-long': 'Parola çok uzun.',
   breached: 'Bu parola bilinen veri sızıntılarında geçiyor. Başka bir tane seç.',
-  'rate-limited': 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.',
 }
 
 /**
@@ -34,9 +36,12 @@ export async function registerAction(
   const password = String(form.get('password') ?? '')
   const displayName = String(form.get('displayName') ?? '').trim() || null
 
-  const ip = (await headers()).get('x-forwarded-for') ?? 'bilinmeyen'
+  const ip = clientIp(await headers())
   const allowed = await deps.limiter.hit('register', ip, 5, 60 * 60 * 1000, deps.now())
-  if (!allowed) return { message: MESSAGES['rate-limited']!, done: false }
+  if (!allowed) {
+    await uniform(Promise.resolve())
+    return { message: RATE_LIMITED, done: false }
+  }
 
   const result = await uniform(register({ email, password, displayName }, deps))
 

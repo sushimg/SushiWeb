@@ -3,6 +3,7 @@
 import { login } from '@sushi/identity-core'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { clientIp } from '@/lib/client-ip'
 import { deps } from '@/lib/deps'
 import { setSessionCookie } from '@/lib/session'
 import { uniform } from '@/lib/uniform'
@@ -26,21 +27,35 @@ export async function loginAction(
   const password = String(form.get('password') ?? '')
 
   const headerList = await headers()
-  const ip = headerList.get('x-forwarded-for') ?? 'bilinmeyen'
+  const ip = clientIp(headerList)
   const userAgent = headerList.get('user-agent')
 
   // İki ayrı sınır: IP başına saldırının hızını, e-posta başına tek bir
   // hesaba yoğunlaşan denemeleri kısar. Yalnızca IP sınırlansaydı, dağıtık
   // bir saldırı tek hesabı serbestçe deneyebilirdi.
+  //
+  // E-posta kovası yalnızca BAŞARISIZ denemelerde harcanır. Herkes herhangi
+  // bir adresi forma yazabildiği için, her denemeyi sayan bir sınır, kurbanın
+  // adresini bilen saldırgana onu kilitleme imkânı tanır. Bu yüzden e-posta
+  // kovası isteğin BAŞINDA değil, sonucu bilindiğinde ve yalnızca sonuç
+  // başarısızsa harcanır. RateLimiter portu yalnızca "say ve kontrol et"
+  // birleşik bir `hit` sunar; ayrı bir "önce bak" işlemi yok, bu da isabetli
+  // — çekirdeğe yeni bir port metodu eklemek burada çözülecek bir politika
+  // kararını çekirdeğe taşırdı. IP kovası değişmeden, denemeden önce sayılır.
   const now = deps.now()
   const byIp = await deps.limiter.hit('login-ip', ip, 20, 15 * 60 * 1000, now)
-  const byEmail = await deps.limiter.hit('login-email', email.toLowerCase(), 10, 15 * 60 * 1000, now)
-  if (!byIp || !byEmail) {
+  if (!byIp) {
+    await uniform(Promise.resolve())
     return { message: 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.' }
   }
 
+  const emailKey = email.toLowerCase()
   const result = await uniform(login({ email, password, userAgent }, deps))
-  if (!result) return { message: FAILED }
+  if (!result) {
+    const byEmail = await deps.limiter.hit('login-email', emailKey, 10, 15 * 60 * 1000, now)
+    if (!byEmail) return { message: 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.' }
+    return { message: FAILED }
+  }
 
   await setSessionCookie(result.token)
   redirect('/hesap')

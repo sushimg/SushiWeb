@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState } from 'react'
+import { PASSWORD_MIN_BYTES } from '@sushi/identity-core'
 import { Field } from '@/components/Field'
 import { SubmitButton } from '@/components/SubmitButton'
 import { completeResetAction, type CompleteState } from './actions'
@@ -34,15 +35,16 @@ export function ResetForm({ token }: { token: string }) {
           name="password"
           type="password"
           autoComplete="new-password"
+          describedBy={state.message ? 'sifirla-form-error' : undefined}
         />
         <p className="text-xs text-neutral-500">
-          En az 12 karakter. Bilinen sızıntılarda geçen parolalar kabul edilmez.
+          En az {PASSWORD_MIN_BYTES} karakter. Bilinen sızıntılarda geçen parolalar kabul edilmez.
         </p>
         <SubmitButton>Parolayı değiştir</SubmitButton>
       </form>
 
       {state.message && (
-        <p role="alert" className="text-sm text-red-400">{state.message}</p>
+        <p id="sifirla-form-error" role="alert" className="text-sm text-red-400">{state.message}</p>
       )}
     </div>
   )

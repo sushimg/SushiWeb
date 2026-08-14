@@ -8,7 +8,9 @@
 
 export type PolicyViolation = 'too-short' | 'too-long' | 'breached'
 
-const MIN_BYTES = 12
+/** UI'ın "en az N karakter" gibi metinlerde kullanması için dışa açılır. */
+export const PASSWORD_MIN_BYTES = 12
+const MIN_BYTES = PASSWORD_MIN_BYTES
 const MAX_BYTES = 72
 
 /**

@@ -2,6 +2,7 @@
 
 import { requestPasswordReset } from '@sushi/identity-core'
 import { headers } from 'next/headers'
+import { clientIp } from '@/lib/client-ip'
 import { deps } from '@/lib/deps'
 import { uniform } from '@/lib/uniform'
 
@@ -27,10 +28,18 @@ export async function requestResetAction(
 ): Promise<RequestState> {
   const email = String(form.get('email') ?? '')
 
-  const ip = (await headers()).get('x-forwarded-for') ?? 'bilinmeyen'
+  const ip = clientIp(await headers())
   const now = deps.now()
   const byIp = await deps.limiter.hit('reset-ip', ip, 10, 60 * 60 * 1000, now)
-  const byEmail = await deps.limiter.hit('reset-email', email.toLowerCase(), 3, 60 * 60 * 1000, now)
+  // requestPasswordReset() bilinçli olarak void döner: adresin kayıtlı olup
+  // olmadığını çağırana sızdırmaz. Bu yüzden e-posta kovasını yalnızca
+  // gerçekten iş yapıldığında (adres varsa) harcayamayız — o bilgiyi almanın
+  // tek yolu ya use-case'e dönüş değeri eklemek ya da action'dan hesap
+  // deposunu sorgulamak olurdu; ikisi de bu politika kararını çekirdek
+  // dışına taşırdı. Bunun yerine e-posta kovasını işten ÖNCE, sızıntıya
+  // yetecek kadar sıkı ama meşru kullanıcıyı kilitlemeyecek kadar bol bir
+  // sınırla harcıyoruz (saatte 10 — IP sınırıyla aynı büyüklükte).
+  const byEmail = await deps.limiter.hit('reset-email', email.toLowerCase(), 10, 60 * 60 * 1000, now)
 
   if (byIp && byEmail) {
     await uniform(requestPasswordReset(email, deps))
