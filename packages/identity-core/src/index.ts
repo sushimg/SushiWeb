@@ -5,3 +5,4 @@ export {
   type BreachChecker,
   type PolicyViolation,
 } from './password-policy'
+export type { PasswordHasher } from './ports/password-hasher'
