@@ -14,3 +14,12 @@ export type {
   Identity,
   NewAccount,
 } from './types'
+export { isPlausibleEmail, normalizeEmail } from './email-address'
+export type { VerificationStore } from './ports/verification-store'
+export {
+  register,
+  type RegisterDeps,
+  type RegisterInput,
+  type RegisterResult,
+} from './use-cases/register'
+export { verifyEmail, type VerifyEmailDeps } from './use-cases/verify-email'
