@@ -28,8 +28,11 @@ export {
   authenticate,
   login,
   logout,
+  DUMMY_HASH,
+  type AuthenticateDeps,
   type LoginDeps,
   type LoginInput,
+  type LogoutDeps,
 } from './use-cases/login'
 export {
   completePasswordReset,

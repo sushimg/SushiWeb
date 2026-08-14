@@ -14,6 +14,7 @@ const ACCOUNT: Account = {
 function makeDeps(overrides: Partial<LoginDeps> = {}) {
   const sessions = new Map<string, { accountId: string; expiresAt: Date }>()
   let verifyCalls = 0
+  let findPasswordIdentityCalls = 0
 
   const deps: LoginDeps = {
     accounts: {
@@ -21,8 +22,9 @@ function makeDeps(overrides: Partial<LoginDeps> = {}) {
       findById: async id => (id === ACCOUNT.id ? ACCOUNT : null),
       createWithPassword: async () => null,
       findIdentity: async () => null,
-      findPasswordIdentity: async accountId =>
-        accountId === ACCOUNT.id
+      findPasswordIdentity: async accountId => {
+        findPasswordIdentityCalls++
+        return accountId === ACCOUNT.id
           ? {
               id: 'kimlik-1',
               accountId: ACCOUNT.id,
@@ -30,7 +32,8 @@ function makeDeps(overrides: Partial<LoginDeps> = {}) {
               subject: ACCOUNT.id,
               secretHash: 'gercek-hash',
             }
-          : null,
+          : null
+      },
       setPasswordHash: async () => {},
       markEmailVerified: async () => {},
     },
@@ -64,7 +67,12 @@ function makeDeps(overrides: Partial<LoginDeps> = {}) {
     ...overrides,
   }
 
-  return { deps, sessions, verifyCalls: () => verifyCalls }
+  return {
+    deps,
+    sessions,
+    verifyCalls: () => verifyCalls,
+    findPasswordIdentityCalls: () => findPasswordIdentityCalls,
+  }
 }
 
 describe('login', () => {
@@ -110,6 +118,24 @@ describe('login', () => {
     const { deps, verifyCalls } = makeDeps()
     await login({ email: 'yok@example.com', password: 'x', userAgent: null }, deps)
     expect(verifyCalls()).toBe(1)
+  })
+
+  it('hesap varken de yokken de findPasswordIdentity tam olarak bir kez çağrılır', async () => {
+    // Zamanlama saldırısına karşı: sorgu her iki dalda da koşmalı, aksi
+    // hâlde hesabı olan/olmayan cevaplar arasında ölçülebilir bir süre
+    // farkı oluşur.
+    const { deps: depsWithAccount, findPasswordIdentityCalls: withAccountCalls } =
+      makeDeps()
+    await login(
+      { email: 'a@example.com', password: 'dogru-parola-123', userAgent: null },
+      depsWithAccount,
+    )
+    expect(withAccountCalls()).toBe(1)
+
+    const { deps: depsNoAccount, findPasswordIdentityCalls: noAccountCalls } =
+      makeDeps()
+    await login({ email: 'yok@example.com', password: 'x', userAgent: null }, depsNoAccount)
+    expect(noAccountCalls()).toBe(1)
   })
 
   it('e-postayı normalize ederek arar', async () => {
@@ -195,6 +221,18 @@ describe('authenticate', () => {
   it('boş token için null döner', async () => {
     const { deps } = makeDeps()
     expect(await authenticate('', deps)).toBeNull()
+  })
+
+  it('hesap sonradan askıya alınırsa oturumu geçersiz kılar', async () => {
+    // authenticate her çağrıda hesap durumunu yeniden okur: hesap askıya
+    // alındığında canlı oturumlar da ölmeli, yalnızca yeni girişler değil.
+    const { deps } = makeDeps()
+    const result = await login(
+      { email: 'a@example.com', password: 'dogru-parola-123', userAgent: null },
+      deps,
+    )
+    deps.accounts.findById = async () => ({ ...ACCOUNT, status: 'suspended' })
+    expect(await authenticate(result!.token, deps)).toBeNull()
   })
 })
 

@@ -6,6 +6,11 @@ import type { Account, Identity, NewAccount } from '../types'
  * Metotların hiçbiri "bulunamadı" durumunu hata saymaz — null döner. Çağıran
  * akışların çoğu hesabın yokluğunu normal bir dal olarak ele alır ve bunu
  * dışarıya sızdırmadan yapması gerekir (hesap sayımı yasağı).
+ *
+ * void dönen mutasyon metotları (`setPasswordHash`, `markEmailVerified`, ve
+ * `SessionStore`'daki eşdeğerleri) en iyi çaba ilkesiyle çalışır: eşleşen
+ * satır yoksa sessizce hiçbir şey yapmazlar, bunu bir hata ya da eksik satır
+ * sinyali olarak göstermezler.
  */
 export interface AccountStore {
   /** E-posta normalize edilmiş gelir. Yoksa null. */

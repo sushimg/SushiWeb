@@ -14,8 +14,11 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
  * çıktısıdır; tek amacı doğrulamanın gerçekten koşması ve cevabın hesabı
  * olan durumla aynı süreyi almasıdır.
  */
-const DUMMY_HASH =
+export const DUMMY_HASH =
   '$argon2id$v=19$m=19456,t=2,p=1$c2FsdHNhbHRzYWx0c2E$0000000000000000000000000000000000000000000'
+
+/** Hesabı olmayan sorgularda kullanılan, hiçbir kayıtla eşleşmeyen id. */
+const NIL_ACCOUNT_ID = '00000000-0000-0000-0000-000000000000'
 
 export interface LoginInput {
   email: string
@@ -30,6 +33,18 @@ export interface LoginDeps {
   now: () => Date
 }
 
+/** `authenticate` yalnızca hesap ve oturum deposuna erişir; hasher gerekmez. */
+export interface AuthenticateDeps {
+  accounts: Pick<AccountStore, 'findById'>
+  sessions: SessionStore
+  now: () => Date
+}
+
+/** `logout` yalnızca oturumu iptal eder; hesap ya da hasher gerekmez. */
+export interface LogoutDeps {
+  sessions: Pick<SessionStore, 'revoke'>
+}
+
 /**
  * Parolayla giriş. Başarılıysa ham oturum token'ı döner — çağıran onu
  * cookie'ye koyar. Başarısızlığın sebebi asla dışarı sızmaz: yanlış parola,
@@ -42,11 +57,16 @@ export async function login(
   const email = normalizeEmail(input.email)
   const account = await deps.accounts.findByEmail(email)
 
-  const identity = account
-    ? await deps.accounts.findPasswordIdentity(account.id)
-    : null
+  // Hesap yoksa bile sorgu koşturulur (yok sayılan nil id ile): aksi hâlde
+  // sorgu tamamen atlanır ve gerçek depoda (Postgres/Neon) bu, Argon2
+  // doğrulamasının eşitlediği birkaç milisaniyeden çok daha büyük bir süre
+  // farkı yaratır — cevap süresi hesabın varlığını ele verir. Bu satırı
+  // "gereksiz" sanıp silmeyin.
+  const identity = await deps.accounts.findPasswordIdentity(
+    account ? account.id : NIL_ACCOUNT_ID,
+  )
 
-  // Hesap yoksa da doğrulama koşar: aksi hâlde cevap süresi hesabın
+  // Hesap yoksa da hash doğrulaması koşar: aksi hâlde cevap süresi hesabın
   // varlığını ele verirdi.
   const matches = await deps.hasher.verify(
     input.password,
@@ -70,7 +90,7 @@ export async function login(
 /** Oturum token'ından hesabı çözer ve oturumun ömrünü uzatır. */
 export async function authenticate(
   token: string,
-  deps: LoginDeps,
+  deps: AuthenticateDeps,
 ): Promise<Account | null> {
   if (!token) return null
 
@@ -86,7 +106,7 @@ export async function authenticate(
   return account
 }
 
-export async function logout(token: string, deps: LoginDeps): Promise<void> {
+export async function logout(token: string, deps: LogoutDeps): Promise<void> {
   if (!token) return
   await deps.sessions.revoke(await hashToken(token))
 }
