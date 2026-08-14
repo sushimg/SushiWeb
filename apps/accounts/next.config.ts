@@ -12,8 +12,15 @@ import type { NextConfig } from 'next'
  */
 try {
   const contents = readFileSync(join(import.meta.dirname, '../../.env.local'), 'utf8')
-  for (const line of contents.split('\n')) {
-    const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line)
+  // Satırları hem `\n` hem `\r\n` için bölüyoruz (bkz.
+  // packages/identity-infra/src/db/parse-dotenv.ts — aynı ayrıştırma orada
+  // birim testliyken burada Next'in config yükleyicisi ayrı bir çalışma
+  // zamanı olduğu için mantığı yinelemek zorundayız): Windows'ta checkout
+  // CRLF getirirse, bölmeyi yalnızca `\n`'de yapmak değerin sonuna görünmez
+  // bir `\r` bırakır. `DATABASE_URL` buna dayanıklıdır ama `APP_URL` gibi bir
+  // URL'in sonuna eklenince bağlantıyı sessizce bozar.
+  for (const line of contents.split(/\r?\n/)) {
+    const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*\r?$/.exec(line)
     if (match?.[1] && !process.env[match[1]]) {
       process.env[match[1]] = match[2]?.replace(/^["']|["']$/g, '')
     }

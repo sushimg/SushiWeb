@@ -6,8 +6,12 @@ import { runSessionStoreContract } from './session-store-contract'
 
 const hasDatabase = Boolean(process.env.DATABASE_URL)
 
+// Bu dosyaya özel alt alan adı — bkz. postgres-account-store.test.ts'teki
+// gerekçe. Diğer Postgres sözleşme dosyalarıyla çakışmaz.
+const DOMAIN = 'sessionstore.example.com'
+
 async function cleanup(): Promise<void> {
-  await sql()`delete from accounts where email like '%@example.com'`
+  await sql()`delete from accounts where email like ${'%@' + DOMAIN}`
 }
 
 if (!hasDatabase) {
@@ -19,7 +23,7 @@ if (!hasDatabase) {
     await cleanup()
     const accounts = new PostgresAccountStore()
     const account = await accounts.createWithPassword(
-      { email: 'oturum@example.com', displayName: null },
+      { email: `oturum@${DOMAIN}`, displayName: null },
       'hash',
     )
     if (!account) throw new Error('test hesabı yaratılamadı')

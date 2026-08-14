@@ -37,7 +37,9 @@ export async function registerAction(
   const displayName = String(form.get('displayName') ?? '').trim() || null
 
   const ip = clientIp(await headers())
-  const allowed = await deps.limiter.hit('register', ip, 5, 60 * 60 * 1000, deps.now())
+  // ip === null: başlıklar yoksa IP kovasını atla, bkz. lib/client-ip.ts.
+  const allowed = ip === null
+    || (await deps.limiter.hit('register', ip, 5, 60 * 60 * 1000, deps.now()))
   if (!allowed) {
     await uniform(Promise.resolve())
     return { message: RATE_LIMITED, done: false }

@@ -15,6 +15,9 @@ dist-ssr
 # Framer export backup — not part of the app
 _framer_backup/
 
+# Uçtan uca test çıktısı
+apps/accounts/e2e/_flows-hesap.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

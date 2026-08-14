@@ -30,7 +30,8 @@ export async function requestResetAction(
 
   const ip = clientIp(await headers())
   const now = deps.now()
-  const byIp = await deps.limiter.hit('reset-ip', ip, 10, 60 * 60 * 1000, now)
+  // ip === null: başlıklar yoksa IP kovasını atla, bkz. lib/client-ip.ts.
+  const byIp = ip === null || (await deps.limiter.hit('reset-ip', ip, 10, 60 * 60 * 1000, now))
   // requestPasswordReset() bilinçli olarak void döner: adresin kayıtlı olup
   // olmadığını çağırana sızdırmaz. Bu yüzden e-posta kovasını yalnızca
   // gerçekten iş yapıldığında (adres varsa) harcayamayız — o bilgiyi almanın

@@ -48,6 +48,36 @@ iletişim formu için gereken anahtarı doldur — `VITE_WEB3FORMS_KEY` ya da
 **Veritabanı** (repo kökünde `.env.local`): `DATABASE_URL`. Kurulum adımları
 `docs/database-setup.md` dosyasında. Bu dosya asla commit edilmez.
 
+## Uçtan uca testler
+
+`apps/accounts/e2e/flows.mjs`, gerçek Chromium ile kayıt → doğrulama →
+giriş → oturum koruması → tüm cihazlardan çıkış → parola sıfırlama
+akışlarının tamamını gerçek bir dev sunucusuna karşı sürer.
+
+Önkoşullar:
+
+- `apps/accounts`'ta bir dev sunucusu çalışıyor olmalı
+  (`npm run dev -w @sushi/accounts`), çıktısı bir log dosyasına
+  yönlendirilmiş olarak — e-posta gönderimi henüz gerçek değil
+  (`ConsoleEmailSender`), doğrulama/sıfırlama bağlantıları sunucu
+  konsoluna yazılıyor ve script onları bu log dosyasından okuyor.
+- Repo kökünde `.env.local` içinde `DATABASE_URL` ayarlı olmalı.
+
+Çalıştırma (repo kökünden):
+
+```bash
+npm run dev -w @sushi/accounts > /tmp/accounts-dev.log 2>&1 &
+E2E_LOG=/tmp/accounts-dev.log E2E_EMAIL=e2e-test@example.com \
+  npm run e2e -w @sushi/accounts
+```
+
+Koşu, kendi kullandığı hız-sınırlama kovalarını (`register`, `login-ip`,
+`login-email`, `reset-ip`, `reset-email`, `reset-complete`) `rate_limits`
+tablosundan temizler ki ardışık koşular birbirini kilitlemesin. Bu yüzden
+**üretim veritabanına karşı güvenle çalıştırılamaz** — hem bu temizlik hem
+de `E2E_EMAIL` adresine gerçek bir hesap açması, üretim verisine dokunan
+yan etkilerdir. Yalnızca geliştirme/test veritabanına karşı çalıştırın.
+
 ## Dağıtım
 
 Vercel. Site projesinin Root Directory ayarı `apps/web` olmalıdır — monorepo'da

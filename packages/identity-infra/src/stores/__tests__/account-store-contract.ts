@@ -10,25 +10,32 @@ import type { AccountStore } from '@sushi/identity-core'
 export function runAccountStoreContract(
   name: string,
   makeStore: () => Promise<AccountStore>,
+  /**
+   * Bu sözleşmenin kullandığı e-postaların alan adı. Postgres'e karşı
+   * koşan her çağıran, dosyasına özel bir alan adı vermeli (örn.
+   * `accountstore.example.com`) ki temizlik yalnızca kendi verisini silsin
+   * ve dosyalar paralel koşarken birbirine karışmasın.
+   */
+  domain = 'example.com',
 ): void {
   describe(`${name} — AccountStore sözleşmesi`, () => {
     it('yarattığı hesabı e-postayla bulur', async () => {
       const store = await makeStore()
       const created = await store.createWithPassword(
-        { email: 'a@example.com', displayName: 'A' },
+        { email: `a@${domain}`, displayName: 'A' },
         'hash1',
       )
       expect(created).not.toBeNull()
-      const found = await store.findByEmail('a@example.com')
+      const found = await store.findByEmail(`a@${domain}`)
       expect(found?.id).toBe(created?.id)
-      expect(found?.email).toBe('a@example.com')
+      expect(found?.email).toBe(`a@${domain}`)
       expect(found?.displayName).toBe('A')
     })
 
     it('yeni hesabı doğrulanmamış ve aktif olarak yaratır', async () => {
       const store = await makeStore()
       const created = await store.createWithPassword(
-        { email: 'b@example.com', displayName: null },
+        { email: `b@${domain}`, displayName: null },
         'hash1',
       )
       expect(created?.emailVerified).toBe(false)
@@ -37,17 +44,17 @@ export function runAccountStoreContract(
 
     it('olmayan e-posta için null döner', async () => {
       const store = await makeStore()
-      expect(await store.findByEmail('yok@example.com')).toBeNull()
+      expect(await store.findByEmail(`yok@${domain}`)).toBeNull()
     })
 
     it('aynı e-postayla ikinci kez yaratmayı reddeder', async () => {
       const store = await makeStore()
       await store.createWithPassword(
-        { email: 'c@example.com', displayName: null },
+        { email: `c@${domain}`, displayName: null },
         'hash1',
       )
       const second = await store.createWithPassword(
-        { email: 'c@example.com', displayName: null },
+        { email: `c@${domain}`, displayName: null },
         'hash2',
       )
       expect(second).toBeNull()
@@ -56,16 +63,16 @@ export function runAccountStoreContract(
     it('id ile bulur', async () => {
       const store = await makeStore()
       const created = await store.createWithPassword(
-        { email: 'd@example.com', displayName: null },
+        { email: `d@${domain}`, displayName: null },
         'hash1',
       )
-      expect((await store.findById(created!.id))?.email).toBe('d@example.com')
+      expect((await store.findById(created!.id))?.email).toBe(`d@${domain}`)
     })
 
     it('parola kimliğini hesaba bağlar', async () => {
       const store = await makeStore()
       const created = await store.createWithPassword(
-        { email: 'e@example.com', displayName: null },
+        { email: `e@${domain}`, displayName: null },
         'hash-abc',
       )
       const identity = await store.findPasswordIdentity(created!.id)
@@ -76,7 +83,7 @@ export function runAccountStoreContract(
     it("parola hash'ini günceller", async () => {
       const store = await makeStore()
       const created = await store.createWithPassword(
-        { email: 'f@example.com', displayName: null },
+        { email: `f@${domain}`, displayName: null },
         'eski-hash',
       )
       await store.setPasswordHash(created!.id, 'yeni-hash')
@@ -88,7 +95,7 @@ export function runAccountStoreContract(
     it('e-postayı doğrulanmış işaretler', async () => {
       const store = await makeStore()
       const created = await store.createWithPassword(
-        { email: 'g@example.com', displayName: null },
+        { email: `g@${domain}`, displayName: null },
         'hash1',
       )
       await store.markEmailVerified(created!.id)

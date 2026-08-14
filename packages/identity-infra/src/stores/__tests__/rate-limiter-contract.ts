@@ -9,44 +9,54 @@ const T_NEXT = new Date('2026-01-01T12:01:30Z')      // sonraki pencere
 export function runRateLimiterContract(
   name: string,
   makeLimiter: () => Promise<RateLimiter>,
+  /**
+   * Bu sözleşmenin kullandığı kova adlarına eklenecek önek. Postgres'e
+   * karşı koşan çağıran, dosyasına özel bir önek vermeli ki gerçek uygulama
+   * kovalarıyla (`register`, `login-ip`, ...) ve olası başka test
+   * dosyalarıyla çakışmasın.
+   */
+  bucketPrefix = '',
 ): void {
+  const login = `${bucketPrefix}login`
+  const reset = `${bucketPrefix}reset`
+
   describe(`${name} — RateLimiter sözleşmesi`, () => {
     it('sınırın altındaki isteklere izin verir', async () => {
       const limiter = await makeLimiter()
-      expect(await limiter.hit('login', 'a', 3, WINDOW, T0)).toBe(true)
-      expect(await limiter.hit('login', 'a', 3, WINDOW, T0)).toBe(true)
-      expect(await limiter.hit('login', 'a', 3, WINDOW, T0)).toBe(true)
+      expect(await limiter.hit(login, 'a', 3, WINDOW, T0)).toBe(true)
+      expect(await limiter.hit(login, 'a', 3, WINDOW, T0)).toBe(true)
+      expect(await limiter.hit(login, 'a', 3, WINDOW, T0)).toBe(true)
     })
 
     it('sınırı aşan isteği reddeder', async () => {
       const limiter = await makeLimiter()
-      for (let i = 0; i < 3; i++) await limiter.hit('login', 'b', 3, WINDOW, T0)
-      expect(await limiter.hit('login', 'b', 3, WINDOW, T0)).toBe(false)
+      for (let i = 0; i < 3; i++) await limiter.hit(login, 'b', 3, WINDOW, T0)
+      expect(await limiter.hit(login, 'b', 3, WINDOW, T0)).toBe(false)
     })
 
     it('aynı pencere içinde sayar', async () => {
       const limiter = await makeLimiter()
-      for (let i = 0; i < 3; i++) await limiter.hit('login', 'c', 3, WINDOW, T0)
-      expect(await limiter.hit('login', 'c', 3, WINDOW, T_SAME)).toBe(false)
+      for (let i = 0; i < 3; i++) await limiter.hit(login, 'c', 3, WINDOW, T0)
+      expect(await limiter.hit(login, 'c', 3, WINDOW, T_SAME)).toBe(false)
     })
 
     it('yeni pencerede sayaç sıfırlanır', async () => {
       const limiter = await makeLimiter()
-      for (let i = 0; i < 3; i++) await limiter.hit('login', 'd', 3, WINDOW, T0)
-      expect(await limiter.hit('login', 'd', 3, WINDOW, T_NEXT)).toBe(true)
+      for (let i = 0; i < 3; i++) await limiter.hit(login, 'd', 3, WINDOW, T0)
+      expect(await limiter.hit(login, 'd', 3, WINDOW, T_NEXT)).toBe(true)
     })
 
     it('özneler birbirini etkilemez', async () => {
       const limiter = await makeLimiter()
-      for (let i = 0; i < 3; i++) await limiter.hit('login', 'e', 3, WINDOW, T0)
-      expect(await limiter.hit('login', 'f', 3, WINDOW, T0)).toBe(true)
+      for (let i = 0; i < 3; i++) await limiter.hit(login, 'e', 3, WINDOW, T0)
+      expect(await limiter.hit(login, 'f', 3, WINDOW, T0)).toBe(true)
     })
 
     it('kovalar birbirini etkilemez', async () => {
       // Giriş denemelerini tüketmek, parola sıfırlama hakkını yakmamalı.
       const limiter = await makeLimiter()
-      for (let i = 0; i < 3; i++) await limiter.hit('login', 'g', 3, WINDOW, T0)
-      expect(await limiter.hit('reset', 'g', 3, WINDOW, T0)).toBe(true)
+      for (let i = 0; i < 3; i++) await limiter.hit(login, 'g', 3, WINDOW, T0)
+      expect(await limiter.hit(reset, 'g', 3, WINDOW, T0)).toBe(true)
     })
   })
 }

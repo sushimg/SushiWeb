@@ -31,8 +31,8 @@ describe('clientIp', () => {
     expect(clientIp(headers)).toBe('198.51.100.1')
   })
 
-  it('hiçbir başlık yoksa sabit değere düşer', () => {
+  it('hiçbir başlık yoksa null döner (IP kovası atlanır)', () => {
     const headers = new Headers()
-    expect(clientIp(headers)).toBe('bilinmeyen')
+    expect(clientIp(headers)).toBeNull()
   })
 })

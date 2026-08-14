@@ -43,7 +43,8 @@ export async function loginAction(
   // — çekirdeğe yeni bir port metodu eklemek burada çözülecek bir politika
   // kararını çekirdeğe taşırdı. IP kovası değişmeden, denemeden önce sayılır.
   const now = deps.now()
-  const byIp = await deps.limiter.hit('login-ip', ip, 20, 15 * 60 * 1000, now)
+  // ip === null: başlıklar yoksa IP kovasını atla, bkz. lib/client-ip.ts.
+  const byIp = ip === null || (await deps.limiter.hit('login-ip', ip, 20, 15 * 60 * 1000, now))
   if (!byIp) {
     await uniform(Promise.resolve())
     return { message: 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.' }

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { parseDotenv } from './src/db/parse-dotenv'
 
 /**
  * Kök .env.local'ı okur. Node'un --env-file bayrağı Vitest süreci için
@@ -11,11 +12,8 @@ try {
     join(import.meta.dirname, '../../.env.local'),
     'utf8',
   )
-  for (const line of contents.split('\n')) {
-    const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line)
-    if (match?.[1] && !process.env[match[1]]) {
-      process.env[match[1]] = match[2]?.replace(/^["']|["']$/g, '')
-    }
+  for (const [name, value] of Object.entries(parseDotenv(contents))) {
+    if (!process.env[name]) process.env[name] = value
   }
 } catch {
   // .env.local yok — veritabanı testleri atlanacak.

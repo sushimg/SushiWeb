@@ -7,12 +7,16 @@ const hasDatabase = Boolean(process.env.DATABASE_URL)
 
 /**
  * Sözleşme testleri e-postaları sabit kullandığı için her koşuda temiz bir
- * başlangıç gerekir. Test hesaplarını @example.com alan adıyla tanıyıp
- * siliyoruz — gerçek kullanıcı adresleri bu alan adını kullanamaz (RFC 2606
- * onu tam da bu amaçla ayırmıştır).
+ * başlangıç gerekir. Bu dosyaya özel bir alt alan adı (`accountstore.
+ * example.com`) kullanıyoruz — hem RFC 2606'nın ayırdığı example.com
+ * kökünde kalıyor, hem de diğer Postgres sözleşme dosyalarının (verification-
+ * store, session-store) kendi alt alan adlarıyla çakışmıyor. Böylece
+ * dosyalar paralel koşarken birbirinin verisini silmez.
  */
+const DOMAIN = 'accountstore.example.com'
+
 async function cleanup(): Promise<void> {
-  await sql()`delete from accounts where email like '%@example.com'`
+  await sql()`delete from accounts where email like ${'%@' + DOMAIN}`
 }
 
 if (!hasDatabase) {
@@ -20,10 +24,14 @@ if (!hasDatabase) {
     it('atlandı', () => {})
   })
 } else {
-  runAccountStoreContract('PostgresAccountStore', async () => {
-    await cleanup()
-    return new PostgresAccountStore()
-  })
+  runAccountStoreContract(
+    'PostgresAccountStore',
+    async () => {
+      await cleanup()
+      return new PostgresAccountStore()
+    },
+    DOMAIN,
+  )
 
   afterAll(cleanup)
 }
