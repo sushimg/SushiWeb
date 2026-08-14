@@ -26,6 +26,7 @@ _framer_backup/
 *.sln
 *.sw?
 *.env
+.env.local
 
 # Workspace build çıktıları
 apps/*/dist
