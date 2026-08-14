@@ -6,3 +6,4 @@ export {
   type PolicyViolation,
 } from './password-policy'
 export type { PasswordHasher } from './ports/password-hasher'
+export type { EmailSender, OutgoingEmail } from './ports/email-sender'
