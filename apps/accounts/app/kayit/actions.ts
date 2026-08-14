@@ -5,8 +5,6 @@ import { headers } from 'next/headers'
 import { deps } from '@/lib/deps'
 import { uniform } from '@/lib/uniform'
 
-export const runtime = 'nodejs'
-
 export interface RegisterState {
   message: string | null
   done: boolean

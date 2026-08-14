@@ -7,8 +7,6 @@ import { deps } from '@/lib/deps'
 import { setSessionCookie } from '@/lib/session'
 import { uniform } from '@/lib/uniform'
 
-export const runtime = 'nodejs'
-
 export interface LoginState {
   message: string | null
 }

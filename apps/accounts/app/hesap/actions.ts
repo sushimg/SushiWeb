@@ -5,8 +5,6 @@ import { redirect } from 'next/navigation'
 import { deps } from '@/lib/deps'
 import { clearSessionCookie, currentAccount, readSessionToken } from '@/lib/session'
 
-export const runtime = 'nodejs'
-
 export async function logoutAction(): Promise<void> {
   const token = await readSessionToken()
   if (token) await logout(token, deps)
