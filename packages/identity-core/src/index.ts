@@ -23,3 +23,16 @@ export {
   type RegisterResult,
 } from './use-cases/register'
 export { verifyEmail, type VerifyEmailDeps } from './use-cases/verify-email'
+export type { SessionStore } from './ports/session-store'
+export {
+  authenticate,
+  login,
+  logout,
+  type LoginDeps,
+  type LoginInput,
+} from './use-cases/login'
+export {
+  completePasswordReset,
+  requestPasswordReset,
+  type ResetDeps,
+} from './use-cases/reset-password'
