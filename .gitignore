@@ -26,3 +26,8 @@ _framer_backup/
 *.sln
 *.sw?
 *.env
+
+# Workspace build çıktıları
+apps/*/dist
+apps/*/.next
+packages/*/dist
